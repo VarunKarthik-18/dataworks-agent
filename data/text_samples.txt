@@ -1,0 +1,4 @@
+﻿This is the first sample text.
+Another example sentence for embeddings.
+Machine learning models process text.
+DataWorks automation agent handles various tasks.
