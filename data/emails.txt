@@ -1,0 +1,4 @@
+﻿John Doe <john.doe@example.com>
+Jane Smith <jane.smith@workmail.com>
+Random text without an email.
+Another email: contact@company.org
