@@ -8,11 +8,19 @@ import numpy as np
 from pathlib import Path
 from typing import List
 from fastapi import FastAPI, HTTPException, APIRouter
+from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 import subprocess
 
-# Initialize FastAPI app first
+from fastapi import FastAPI
+from app.api import router  # ✅ Import API router
+from app.tasks import install_and_run  # ✅ Corrected import
+
+
 app = FastAPI()
+
+app.include_router(router)  
+
 router = APIRouter()
 
 # Initialize embedding model
@@ -167,9 +175,22 @@ def execute_task(task: str):
     raise HTTPException(status_code=400, detail=f"Unsupported task. Available tasks are: {', '.join(task_mapping.keys())}")
 
 # Add route to router instead of directly to app
-@router.post("/run")
-async def run(task: str):
-    return execute_task(task)
+@app.get("/read")
+async def read_file(path: str):
+    base_dir = Path("data").resolve()  # Ensure base directory is absolute
+    file_path = (base_dir / path).resolve()
 
-# Include router in the app
-app.include_router(router)
+    # Ensure requested file is inside "data" and exists
+    if not file_path.is_file() or not str(file_path).startswith(str(base_dir)):
+        raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
+
+    return {"content": file_path.read_text(encoding="utf-8")}
+
+
+class TaskRequest(BaseModel):
+    task: str
+
+
+
+
+

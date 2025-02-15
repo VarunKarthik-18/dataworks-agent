@@ -1,11 +1,10 @@
+# app/api.py
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from app.tasks import execute_task
-from app.models import generate_embeddings
+from app.tasks import execute_task  # ✅ Only this import (No circular dependencies)
 
 router = APIRouter()
 
-# Define request models
 class TaskRequest(BaseModel):
     task: str
 
@@ -22,14 +21,5 @@ async def run_task(request: TaskRequest):
         raise HTTPException(status_code=404, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/embeddings")
-async def get_embeddings(request: EmbeddingRequest):
-    """Generates word embeddings for given sentences."""
-    try:
-        embeddings = generate_embeddings(request.sentences)
-        return {"embeddings": embeddings}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

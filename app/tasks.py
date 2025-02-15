@@ -16,7 +16,7 @@ import subprocess
 from tasks_phase_b import convert_markdown_to_html, fetch_api_data
 
 
-from main import install_and_run  # Only import install_and_run from main
+ # Only import install_and_run from main
 # app/tasks.py
 # app/tasks.py
 from app.utils import extract_h1_index, find_similar_comments  # ✅ Fix circular import
@@ -174,27 +174,48 @@ def handle_a5():
     return "Extracted first line from most recent log."
 
 
+import os
+import subprocess
+import logging
+from fastapi import HTTPException
+
 def format_markdown(input_path="data/format.md"):
     try:
-        subprocess.run(["npm", "install", "prettier@3.4.2", "-g"], check=True)
-        
+        # Ensure the `data/` directory exists
+        if not os.path.exists("data"):
+            os.makedirs("data")
+
+        # Ensure the markdown file exists
         if not os.path.exists(input_path):
             raise FileNotFoundError(f"Markdown file not found at: {input_path}")
-        
+
+        # Install Prettier locally (if not already installed)
+        subprocess.run(["npm", "install", "prettier@3.4.2"], check=True)
+
+        # Use `npx.cmd` for Windows compatibility
+        npx_command = "npx.cmd" if os.name == "nt" else "npx"
+
+        # Run Prettier to format the markdown file
         result = subprocess.run(
-            ["npx", "prettier", "--write", input_path],
+            [npx_command, "prettier", "--write", input_path],
             capture_output=True,
             text=True,
             check=True
         )
-        
-        return f"Successfully formatted {input_path}"
-        
+
+        logging.info(f"Prettier Output: {result.stdout.strip()}")
+        return f"✅ Successfully formatted {input_path}"
+
+    except FileNotFoundError as e:
+        logging.error(str(e))
+        raise HTTPException(status_code=404, detail=str(e))
+
     except subprocess.CalledProcessError as e:
-        logging.error(f"Prettier error: {e.stderr}")
-        raise HTTPException(status_code=500, detail=f"Prettier error: {e.stderr}")
+        logging.error(f"⚠️ Prettier error: {e.stderr or e.stdout}")
+        raise HTTPException(status_code=500, detail=f"Prettier error: {e.stderr or e.stdout}")
+
     except Exception as e:
-        logging.error(f"Error in format_markdown: {e}")
+        logging.error(f"❌ Unexpected error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
 
@@ -228,6 +249,15 @@ def query_gold_ticket_sales(db_path="data/ticket-sales.db", output_file="data/ti
     except Exception as e:
         logging.error(f"Error in query_gold_ticket_sales: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+
+def install_and_run(email: str):
+    """Install UV (if required) and run datagen.py"""
+    subprocess.run(["pip", "install", "uv"], check=True)
+    subprocess.run(["python", "datagen.py", email], check=True)
+    return "✅ Datagen script executed"
 
     
 

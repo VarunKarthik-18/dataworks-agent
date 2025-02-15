@@ -1,27 +1,20 @@
+# app/utils.py
 import re
-
-def extract_h1_index(markdown_text: str) -> dict:
-    """Extracts H1 headings and their positions from markdown text."""
-    lines = markdown_text.split("\n")
-    index = {}
-    for i, line in enumerate(lines):
-        match = re.match(r"^#\s+(.+)", line)  # Matches lines starting with '# '
-        if match:
-            heading = match.group(1).strip()
-            index[heading] = i  # Store the line number
-    return index
 from sentence_transformers import SentenceTransformer, util
 
-# Load the model globally for efficiency
-model = SentenceTransformer("all-MiniLM-L6-v2")
+# Load model globally (better performance)
+embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
-def find_similar_comments(comments: list) -> tuple:
+def extract_h1_index(markdown_text):
+    """Extracts H1 headings from markdown text."""
+    return re.findall(r"^# (.+)", markdown_text, re.MULTILINE)
+
+def find_similar_comments(comments):
     """Finds the most similar pair of comments using embeddings."""
     if len(comments) < 2:
         return None  # Not enough comments to compare
 
-    embeddings = model.encode(comments, convert_to_tensor=True)
-
+    embeddings = embedding_model.encode(comments, convert_to_tensor=True)
     best_pair = None
     best_score = -1
 
